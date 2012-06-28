@@ -1,5 +1,5 @@
 <% unless @error %>
-<h1><%= @dashboard.name %>&nbsp;<small><%= @dashboard.description %></small></h1>
+<h1><%= @dashboard.name %>&nbsp;<small id="filter"><%= @dashboard.description %></small></h1>
 <%= erb :_interval_filter, :layout => false unless @interval_filters.empty? %>
 <div class="row">
     <table>
@@ -12,10 +12,10 @@
             <td>
             <% if graph %>
                 <% if graph[:graphite][:description] %>
-                    <a href='<%= [@prefix, params[:category], @params[:dash], 'details', i].join "/" %>'>
+                    <a href='<%= [@prefix, params[:category], @params[:dash], 'details', i].join "/" %>' tag='<%= graph[:graphite][:description].split("#")[1] or "system" %>'>
                     <img src='<%= [@top_level[@params[:category]].graphite_render, graph[:graphite][:url]].join "?" %>' rel="<%= row == 1 ? 'popover-below' : 'popover-above' %>" title="<%= graph[:graphite][:title] %>" data-content="<%= graph[:graphite][:description] %>"></a>
                 <% else %>
-                    <a href='<%= [@prefix, params[:category], @params[:dash], 'details', i].join "/" %>'>
+                    <a href='<%= [@prefix, params[:category], @params[:dash], 'details', i].join "/" %>' tag='system'>
                     <img src='<%= [@top_level[@params[:category]].graphite_render, graph[:graphite][:url]].join "?" %>'></a>
                 <% end %>
             <% end %>
@@ -39,6 +39,30 @@
         .popover({
           placement: "below", delayIn: 1000
         })
+    })
+    
+    $(document).ready(function () {
+      var breadcrumbs = new Array();
+      $("a[tag]").each(function() {
+        var tagname = $(this).attr('tag');
+        if (breadcrumbs.indexOf(tagname) == -1) {
+          breadcrumbs.push(tagname);
+        }
+      });
+      //TODO: order breadcrumbs alphabetically
+      
+      $("#filter").empty();
+      $.each(breadcrumbs, function(i, value) {
+        $("<a class='filter' href='#'></a>").text(value).click(function () {
+          $("a[tag=" + value + "]").show();
+          $("td a[tag!=" + value + "][tag]").remove();
+        }).appendTo($("#filter"));
+      });
+      //write a JS filtering fuction
+      //test it
+      //attach the filtering function to the harvested tags
+      //point the h1 link to all metrics
+      //change the cursor and the filter text to links
     })
 </script>
 <% end %>
