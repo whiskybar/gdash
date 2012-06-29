@@ -1,5 +1,5 @@
 <% unless @error %>
-<h1><%= @dashboard.name %>&nbsp;<small><%= @dashboard.description %></small></h1>
+<h1><span id="title"><%= @dashboard.name %></span>&nbsp;<small id="filter"><%= @dashboard.description %></small></h1>
 <%= erb :_interval_filter, :layout => false unless @interval_filters.empty? %>
 <div class="row">
     <table>
@@ -12,10 +12,10 @@
             <td>
             <% if graph %>
                 <% if graph[:graphite][:description] %>
-                    <a href='<%= [@prefix, params[:category], @params[:dash], 'details', i].join "/" %>'>
+                    <a href='<%= [@prefix, params[:category], @params[:dash], 'details', i].join "/" %>' tag='<%= graph[:graphite][:description].split("#")[1] or "system" %>'>
                     <img src='<%= [@top_level[@params[:category]].graphite_render, graph[:graphite][:url]].join "?" %>' rel="<%= row == 1 ? 'popover-below' : 'popover-above' %>" title="<%= graph[:graphite][:title] %>" data-content="<%= graph[:graphite][:description] %>"></a>
                 <% else %>
-                    <a href='<%= [@prefix, params[:category], @params[:dash], 'details', i].join "/" %>'>
+                    <a href='<%= [@prefix, params[:category], @params[:dash], 'details', i].join "/" %>' tag='system'>
                     <img src='<%= [@top_level[@params[:category]].graphite_render, graph[:graphite][:url]].join "?" %>'></a>
                 <% end %>
             <% end %>
@@ -39,6 +39,55 @@
         .popover({
           placement: "below", delayIn: 1000
         })
+    })
+    
+    $(document).ready(function () {
+    
+      // fetch all categories (aka tags)
+      var breadcrumbs = new Array();
+      $("a[tag]").each(function() {
+        var tagname = $(this).attr('tag');
+        if (breadcrumbs.indexOf(tagname) == -1) {
+          breadcrumbs.push(tagname);
+        }
+      });
+
+      // order the tags
+      var ordering = ["system", "redis", "nginx", "postgresql", "supervisor", "elasticsearch", "mongo"];
+      var unsorted = breadcrumbs;
+      breadcrumbs = new Array();
+      $.each(ordering, function(i, value) {
+        if (unsorted.indexOf(value) != -1) {
+            breadcrumbs.push(value);
+        }
+      });
+      
+      // function which filters the graphs on the page
+      function filter_clicked(value) {
+          if (value) {
+              $("a[tag=" + value + "]").parent().show();
+              $("td a[tag!=" + value + "][tag]").parent().hide();
+          } else {
+              $("a[tag]").parent().show();
+          }
+      }
+      
+      // replace the secondary title with the tag navigation
+      $("#filter").empty();
+      $.each(breadcrumbs, function(i, value) {
+        $("<a class='filter' href='#" + value +"'></a>").text(value + " ").click(function () {
+          filter_clicked(value);
+        }).css("color", "gray").appendTo($("#filter"));
+      });
+      
+      // replace the title with a link which removes all filtering
+      label = $("#title").text();
+      $("#title").replaceWith($("<a href='#'></a>").text(label).css("color", "black").click(function() {
+          filter_clicked();
+      }));
+
+      // restore the filter after an automatic reload
+      filter_clicked($(document.location).attr("hash").substring(1));
     })
 </script>
 <% end %>
