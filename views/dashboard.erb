@@ -52,11 +52,18 @@
       });
 
       // order the tags
-      var ordering = ["system", "redis", "nginx", "postgresql", "supervisor", "elasticsearch", "mongo"];
+      var ordering = ["system", "redis", "nginx", "postgres", "supervisor", "elasticsearch", "mongo"];
       var unsorted = breadcrumbs;
       breadcrumbs = new Array();
+      // sort the known tags by the ordering array
       $.each(ordering, function(i, value) {
         if (unsorted.indexOf(value) != -1) {
+            breadcrumbs.push(value);
+        }
+      });
+      // append the unknown tags
+      $.each(unsorted, function(i, value) {
+        if (breadcrumbs.indexOf(value) == -1 ) {
             breadcrumbs.push(value);
         }
       });
