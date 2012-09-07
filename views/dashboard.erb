@@ -94,6 +94,10 @@
 
       // restore the filter after an automatic reload
       filter_clicked($(document.location).attr("hash").substring(1));
+      
+      // play nicely with an automatic reload
+      $('meta[http-equiv=refresh]').remove();
+      setTimeout(function() { window.location.reload(); }, 60000)
     })
 </script>
 <% end %>
